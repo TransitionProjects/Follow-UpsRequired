@@ -10,8 +10,8 @@ fiddle with the code every time they run the report.
 import pandas as pd
 from datetime import date
 from datetime import datetime
-from datetime import timedelta
 from calendar import monthrange
+from dateutil.relativedelta import relativedelta
 from tkinter.filedialog import askopenfilename
 from tkinter.filedialog import asksaveasfilename
 
@@ -27,7 +27,7 @@ class RunDate:
 
     def check_date(self):
         if self.today.day <= 5:
-            last_month = self.today + timedelta(month=-1)
+            last_month = self.today + relativedelta(months=-1)
             end_of_month = date(
                 year=last_month.year,
                 month=last_month.month,
@@ -46,11 +46,11 @@ class RunDate:
 class CreateRequiredFollowUps:
     def __init__(self, file_path):
         self.raw_data = pd.read_excel(file_path)
-        self.run_date, self.report_date = RunDate()
+        self.run_date = RunDate()
         self.month_range = set(
             [value.strftime("%B") for value in self.raw_data["Follow Up Due Date(2512)"]]
         )
-        self.current_month = now().month
+        self.current_month = datetime.now().month
 
     def process(self):
         data = self.raw_data
@@ -62,10 +62,11 @@ class CreateRequiredFollowUps:
             month_data = data[
                 (data["Follow Up Due Date(2512)"].dt.strftime("%B") == month) &
                 data["Actual Follow Up Date(2518)"].isna()
-            ]
+            ].drop_duplicates(subset="Client Uid")
             month_data.to_excel(writer, sheet_name="{} Follow-Ups".format(month), index=False)
         data.to_excel(writer, sheet_name="Raw Data", index=False)
         writer.save()
 
 if __name__ == "__main__":
     run = CreateRequiredFollowUps(askopenfilename(title="Open the Housing Outcomes v2.0 Report"))
+    run.process()
