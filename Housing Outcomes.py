@@ -1,3 +1,6 @@
+__author__ = "David Marienburg"
+__version__ = "1.11"
+
 """
 This script is for processing the Housing Services - Housing Outcomes v2.0 report that is used by
 the follow-ups specialistself.
