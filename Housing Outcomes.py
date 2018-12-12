@@ -18,14 +18,13 @@ from tkinter.filedialog import asksaveasfilename
 
 class CreateRequiredFollowUps:
     def __init__(self, file_path):
-        # read the excel report into a pandas data frame
-        self.raw_data = pd.read_excel(file_path)
-        # not currently in use
-        self.run_date = RunDate()
+        # read the excel report into a pandas data frames
+        self.raw_fu_data = pd.read_excel(file_path, sheet_name="FollowUps")
+        self.raw_placement_data = pd.read_excel(file_path, sheet_name="Placements")
         # create a immutable list of unique months during which follow-ups are
         # due
         self.month_range = set(
-            [value.strftime("%B") for value in self.raw_data["Follow Up Due Date(2512)"]]
+            [value.strftime("%B") for value in self.raw_fu_data["Follow Up Due Date(2512)"]]
         )
         # create month and year name variables for the name of the processed
         # report
@@ -34,7 +33,12 @@ class CreateRequiredFollowUps:
 
     def process(self):
         # create a local copy of the self.raw_data data frame
-        data = self.raw_data
+        data = self.raw_fu_data.merge(
+            self.raw_placement_data,
+            how="left",
+            left_on=["Client Unique Id", "Initial Placement/Eviction Prevention Date(2515)"],
+            right_on=["Client Unique Id", "Placement Date(3072)"]
+        )
         # initiate the ExcelWriter object variable
         writer = pd.ExcelWriter(
             asksaveasfilename(
@@ -54,13 +58,24 @@ class CreateRequiredFollowUps:
             month_data = data[
                 (data["Follow Up Due Date(2512)"].dt.strftime("%B") == month) &
                 data["Actual Follow Up Date(2518)"].isna()
-            ].drop_duplicates(subset="Client Uid")
-            month_data.to_excel(writer, sheet_name="{} Follow-Ups".format(month), index=False)
+            ].drop_duplicates(
+                subset="Client Unique Id"
+            ).drop(
+                ["Client Unique Id", "Client Uid_y", "Placement Date(3072)"],
+                axis=1
+            )
+            month_data.to_excel(
+                writer,
+                sheet_name="{} Follow-Ups".format(month),
+                index=False
+            )
         # create an excel sheet containing the raw data
         data.to_excel(writer, sheet_name="Raw Data", index=False)
         # save the spreadsheet
         writer.save()
 
 if __name__ == "__main__":
-    run = CreateRequiredFollowUps(askopenfilename(title="Open the Housing Outcomes v2.0 Report"))
+    run = CreateRequiredFollowUps(
+        askopenfilename(title="Open the Housing Outcomes v2.2 Report")
+    )
     run.process()

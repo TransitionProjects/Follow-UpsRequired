@@ -14,7 +14,7 @@ from tkinter.filedialog import asksaveasfilename as asafn
 
 class CreateAddressList:
     def __init__(self, file_path):
-        self.raw_data = pd.read_excel(file_path)
+        self.raw_data = pd.read_excel(file_path, sheet_name="FollowUps")
         self.current_month = dt.now().month
         self.current_year = dt.now().year
 
