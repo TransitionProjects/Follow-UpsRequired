@@ -21,6 +21,7 @@ class CreateRequiredFollowUps:
         # read the excel report into a pandas data frames
         self.raw_fu_data = pd.read_excel(file_path, sheet_name="FollowUps")
         self.raw_placement_data = pd.read_excel(file_path, sheet_name="Placements")
+        self.raw_address_data = pd.read_excel(file_path, sheet_name="Addresses")
         # create a immutable list of unique months during which follow-ups are
         # due
         self.month_range = set(
@@ -32,10 +33,20 @@ class CreateRequiredFollowUps:
         self.current_year = datetime.now().year
 
     def process(self):
-        # create a local copy of the self.raw_data data frame
+        # create a local copy of the self.raw_data data frame then merge that
+        # copy with the address and placement data frames to ensure that all
+        # followups are related to a TPI placement and that the Addresses
+        # provided are the newest addresses.
         data = self.raw_fu_data.merge(
-            self.raw_placement_data,
+            self.raw_address_data.sort_values(
+                by=["Client Unique Id", "Date Added (61-date_added)"],
+                ascending=False
+            ).drop_duplicates(subset="Client Unique Id"),
             how="left",
+            on="Client Unique Id"
+        ).merge(
+            self.raw_placement_data,
+            how="inner",
             left_on=["Client Unique Id", "Initial Placement/Eviction Prevention Date(2515)"],
             right_on=["Client Unique Id", "Placement Date(3072)"]
         )
