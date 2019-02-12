@@ -81,6 +81,10 @@ class CreateRequiredFollowUps:
                 index=False
             )
         # create an excel sheet containing the raw data
+        data[
+            (data["Follow-Up Status(2729)"] == "Attempted, Unable to contact client") |
+            (data["Is Client Still in Housing?(2519)"] == "Is Client Still in Housing?(2519)")
+        ].to_excel(writer, sheet_name="Contact Attempted", index=False)
         data.to_excel(writer, sheet_name="Raw Data", index=False)
         # save the spreadsheet
         writer.save()
