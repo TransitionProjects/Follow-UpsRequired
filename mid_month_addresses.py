@@ -42,9 +42,9 @@ class CreateAddressList:
             "Is Client Still in Housing?(2519)"
         ]]
 
-        address_data = self.raw_addresses(
-                self.raw_addresses["Client Uid"].isin(fu_data["Client Unique Id"])
-        ).sort_values(
+        address_data = self.raw_addresses[
+                self.raw_addresses["Client Uid"].isin(fu_data["Client Uid"])
+        ].sort_values(
             by=["Client Uid", "Date Added (61-date_added)"],
             ascending=False
         ).drop_duplicates(
@@ -69,7 +69,7 @@ class CreateAddressList:
             ),
             engine="xlsxwriter"
         )
-        data.merge(
+        fu_data.merge(
             address_data,
             on="Client Uid",
              how="left"
